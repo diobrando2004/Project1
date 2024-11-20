@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ThêmSVList</title>
+    <style>
+        li{
+            color: green;
+        }
+        img{
+            position: fixed;
+        }
+        a{  
+            font-size: 20px;
+            background-color: red;
+            color: white;
+            border: 1px;
+        }
+        a:hover{
+            cursor: pointer;
+            background-color: rgb(246, 87, 87);
+        }
+        div {
+        position: relative;
+        display: inline;
+        }
+        h2{
+            text-align: center;
+            height: 50px;
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: red;
+        }
+        body{
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 20px;
+        }
+        form{
+            max-width: 400px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid;
+            border-radius: 5px;
+        }
+        label{
+            display: block;
+        }
+
+        input[type="submit"] {
+        background-color: rgb(255, 55, 55);
+        color: white;
+        border: 1px solid;
+        cursor: pointer;
+    }
+    input[type="file"]:hover{
+        cursor: pointer;
+        background-color: rgb(212, 212, 212);
+    }
+    input[type="submit"]:hover{
+        background-color: rgb(193, 10, 10);
+    }
+    </style>
+</head>
+<body>
+
+    <img src="{{ url_for('static', filename='logo.png') }}" height="200px" alt="logo">
+    <h2>Thêm sinh viên bằng danh sách</h2>
+    <form action="/ThemsvList" method="post" enctype="multipart/form-data">
+        <label for = "List" >File CSV</label>
+        <input type="file" id="List" name="List" required accept=".csv"required><br><br>
+        <input type="submit" value="Thêm Danh sách">
+        <br>
+        <br>
+        <a href="/">return</a>
+    </form>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    {% endwith %}
+</body>
+</html>
