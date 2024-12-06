@@ -10,7 +10,7 @@
             background-color: antiquewhite;
             margin: auto;
         }
-        body div.fetcher {
+        .fetcher {
             text-align: center;
         }
         .student-list th{
@@ -90,21 +90,15 @@
 <body>
 
     <img src="{{ url_for('static', filename='logo.png') }}" height="200px" alt="logo">
-    <h2>Thêm sinh viên bằng tay</h2>
-    <form id = "themSV" action="/Themsv" method="post" enctype="multipart/form-data">
-        <label for = "Name" >Họ và tên</label>
-        <input type="text" id="Name" name="Name" required>
+    <h2>Xóa Sinh Viên</h2>
+    <form id = "xoaSV" action="/XoaSV" method="post" enctype="multipart/form-data">
         <label for = "ID" >Mã sinh viên</label>
         <input type="text" id="ID" name="ID" required>
-        <label for = "dob" >Ngày sinh</label>
-        <input type="date" id="dob" name="dob" required> <br> <br>
-        <label for = "photo" >Ảnh sinh viên</label>
-        <input type="file" id="photo" name="photo" accept="image/*" required>
-        <input type="submit" value="Thêm Sinh Vien">
+        <input type="submit" value="Xóa Sinh Viên">
         <a href="/">return</a>
     </form>
-    <div class = "response" id="responseMessage" style="text-align: center; margin-top: 20px;"></div>
-    <script src="{{ url_for('static', filename='js/themsv.js') }}"></script>
+    <div class="response" id="responseMessage" style="text-align: center; margin-top: 20px;"></div>
+    <script src="{{ url_for('static', filename='js/xoasv.js') }}"></script>
 
     <h1>Danh sách sinh viên</h1>
     <div id ="student-list"></div>
@@ -114,5 +108,6 @@
         <button onclick="fetchStudents()">Refresh List</button>
     </div>  
     <script src ="{{ url_for('static', filename='js/showlist.js') }}"> </script>
+
 </body>
 </html>

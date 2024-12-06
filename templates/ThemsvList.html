@@ -5,6 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ThêmSVList</title>
     <style>
+        .student-list{
+            width: 80%;
+            background-color: antiquewhite;
+            margin: auto;
+        }
+        .fetcher {
+            text-align: center;
+        }
+        .student-list th{
+            text-align: center;
+        }
+        .student-list td, .student-list tr{
+            text-align: center;
+            background-color:bisque;
+        }
+        h1{
+            font-family: Arial, Helvetica, sans-serif;
+            text-align: center;
+        }
+        body {
+            background-image: url("{{ url_for('static', filename='background.jpg') }}");
+            background-size: cover;
+        }
         li{
             color: green;
         }
@@ -21,7 +44,7 @@
             cursor: pointer;
             background-color: rgb(246, 87, 87);
         }
-        div {
+        div.response {
         position: relative;
         display: inline;
         }
@@ -36,6 +59,7 @@
             margin: 20px;
         }
         form{
+            background-color: white;
             max-width: 400px;
             margin: auto;
             padding: 20px;
@@ -65,7 +89,7 @@
 
     <img src="{{ url_for('static', filename='logo.png') }}" height="200px" alt="logo">
     <h2>Thêm sinh viên bằng danh sách</h2>
-    <form action="/ThemsvList" method="post" enctype="multipart/form-data">
+    <form id="themsvList" action="/ThemsvList" method="post" enctype="multipart/form-data">
         <label for = "List" >File CSV</label>
         <input type="file" id="List" name="List" required accept=".csv"required><br><br>
         <input type="submit" value="Thêm Danh sách">
@@ -73,14 +97,16 @@
         <br>
         <a href="/">return</a>
     </form>
-    {% with messages = get_flashed_messages() %}
-    {% if messages %}
-        <ul>
-            {% for message in messages %}
-                <li>{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-    {% endwith %}
+    <div class="response" id="responseMessage" style="text-align: center; margin-top: 20px;"></div>
+    <script src="{{ url_for('static', filename='js/themsvlist.js') }}"></script>
+
+    <h1>Danh sách sinh viên</h1>
+    <div id ="student-list"></div>
+    <br>
+    <br>
+    <div class="fetcher">   
+        <button onclick="fetchStudents()">Refresh List</button>
+    </div>  
+    <script src ="{{ url_for('static', filename='js/showlist.js') }}"> </script>
 </body>
 </html>
