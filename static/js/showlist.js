@@ -17,10 +17,16 @@ async function fetchStudents() {
         table.appendChild(header);
         data.students.forEach(student => {
             const row = document.createElement('tr');
+            if (student.CheckedIn === true) {
+                row.style.backgroundColor = 'lightgreen';
+            }
+            else  {
+                row.style.backgroundColor = 'white';
+            }
             row.innerHTML = `
             <td>${student.ID}</td>
             <td>${student.Name}</td>
-            <td>${student.DateOfBirth}</td`;
+            <td>${student.DateOfBirth}</td>`;
             table.appendChild(row);
         });
         studentList.appendChild(table);

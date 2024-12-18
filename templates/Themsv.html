@@ -5,6 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ThêmSV</title>
     <style>
+        html, body {
+        margin: 0; 
+        padding: 0; 
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        position: relative; 
+        }
+        body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+         width: 100vw;
+        height: 100vh;
+        background-color: rgba(255, 255, 255, 0.8); 
+        z-index: -1;
+        }
         .student-list{
             width: 80%;
             background-color: antiquewhite;
@@ -18,15 +36,22 @@
         }
         .student-list td, .student-list tr{
             text-align: center;
-            background-color: bisque;
         }
         h1{
             font-family: Arial, Helvetica, sans-serif;
             text-align: center;
         }
+        form, div, img, a {
+        position: relative;
+        }
         body {
+            position: relative;
             background-image: url("{{ url_for('static', filename='background.jpg') }}");
             background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            margin: 0;
+            padding: 0;
         }
         li{
             color: green;
@@ -36,6 +61,10 @@
             background-color: red;
             color: white;
             border: 1px;
+        }
+        a:hover{
+            cursor: pointer;
+            background-color: rgb(246, 87, 87);
         }
         img{
             position: fixed;

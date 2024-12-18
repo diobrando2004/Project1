@@ -1,11 +1,11 @@
-    document.getElementById("themSV").addEventListener("submit", async function(event) {
+document.getElementById("checkInWithNameFace").addEventListener("submit", async function(event) {
     event.preventDefault(); // Prevent the default form submission
     
-    const form = document.getElementById("themSV");
+    const form = document.getElementById("checkInWithNameFace");
     const formData = new FormData(form); // Get form data including the file
     
     try {
-        const response = await fetch("/Themsv", {
+        const response = await fetch("/CheckInWithNameFace", {
             method: "POST",
             body: formData
         });

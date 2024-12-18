@@ -113,17 +113,17 @@
 <body>
 
     <img src="{{ url_for('static', filename='logo.png') }}" height="200px" alt="logo">
-    <h2>Thêm sinh viên bằng danh sách</h2>
-    <form id="themsvList" action="/ThemsvList" method="post" enctype="multipart/form-data">
-        <label for = "List" >File CSV</label>
-        <input type="file" id="List" name="List" required accept=".csv"required><br><br>
-        <input type="submit" value="Thêm Danh sách">
+    <h2>Thêm sinh viên bằng thẻ sinh viên</h2>
+    <form id="themsvID" action="/ThemsvID" method="post" enctype="multipart/form-data">
+        <label for = "photo" >Ảnh sinh viên</label>
+        <input type="file" id="photo" name="photo" accept="image/*" required><br>
+        <input type="submit" value="Thêm Sinh viên">
         <br>
         <br>
         <a href="/">return</a>
     </form>
     <div class="response" id="responseMessage" style="text-align: center; margin-top: 20px;"></div>
-    <script src="{{ url_for('static', filename='js/themsvlist.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/themsvID.js') }}"></script>
 
     <h1>Danh sách sinh viên</h1>
     <div id ="student-list"></div>

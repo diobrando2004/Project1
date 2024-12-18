@@ -1,11 +1,20 @@
+import re
 from flask import Flask, render_template, request, flash, redirect, jsonify
 import csv
 import os
 import json
+import pytesseract
 from werkzeug.exceptions import RequestEntityTooLarge
 from PIL import Image
 from PIL.ExifTags import TAGS, GPSTAGS
 from datetime import date, datetime
+from deepface import DeepFace
+import zxingcpp
+from playwright.sync_api import sync_playwright
+from bs4 import BeautifulSoup
+import base64
+from scipy.spatial.distance import cosine
+
 
 app = Flask(__name__)
 csv_path='students/students.csv'
@@ -16,6 +25,77 @@ app.config['MAX_CONTENT_LENGTH'] = 4*1024*1024
 def file_too_large(e):
     return jsonify({"success": False, "message":f"only files up to 4MB"}),413
     #return redirect('/Themsv')
+
+def get_dob_from_ID(img_path):
+    pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+    image_path = img_path  
+    image = Image.open(image_path)
+    text = pytesseract.image_to_string(image)
+    date_pattern = r"\b\d{2}/\d{2}/\d{4}\b"
+    dates = re.findall(date_pattern, text)
+    dob = dates[0]
+    dob_formatted = datetime.strptime(dob, "%d/%m/%Y").strftime("%Y-%m-%d")
+    return dob_formatted
+
+def compare_face(json1, json2, threshold= 0.4):
+    with open(json1, "r") as f:
+            embedding1 = json.load(f)
+        
+    with open(json2, "r") as f:
+            embedding2 = json.load(f)
+
+    try:
+        similarity = 1 - cosine(embedding1[0]["embedding"], embedding2[0]["embedding"])
+        
+        if similarity > threshold:
+            return True
+        else:
+            return False
+    except Exception as e:
+         raise RuntimeError("error") from e
+
+
+
+def get_url(img_path):
+    image = Image.open(img_path)
+    results = zxingcpp.read_barcode(image)
+    return results
+
+def get_student_info_from_web(url):
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        context = browser.new_context(
+            viewport={"width": 375, "height": 812},
+            user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 13_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.1 Mobile/15E148 Safari/604.1"
+        )
+        page = context.new_page()
+        page.goto(url)
+        page.wait_for_selector("text=MSSV:")
+        html_content = page.content()
+        browser.close()
+
+        soup = BeautifulSoup(html_content, "html.parser")
+
+        full_name = soup.find("div", {"class": "full-name center"}).get_text(strip=True) 
+        mssv_tags = soup.find_all("div", class_="center")
+        mssv_strong_tags = mssv_tags[1].find_all("strong")
+        mssv = mssv_strong_tags[1].text.strip()
+        img_tag = soup.find("img", class_="img-avatar")
+        img_src = img_tag["src"]
+        
+        output_path = f"photos"
+        if img_src.startswith("data:image"):
+            base64_data = img_src.split(",")[1]  
+            img_data = base64.b64decode(base64_data)
+
+            output_file = os.path.join(output_path, f"{mssv}.jpg")
+            with open(output_file, "wb") as f:
+                f.write(img_data)
+        student = ["", ""]
+        student[0] = full_name
+        student[1] = mssv
+        return student
+
 
 def extract_image_data(image_path):
     metadata = {}
@@ -49,6 +129,15 @@ def extract_image_data(image_path):
         metadata['error'] = str(e)
     return metadata
 
+def save_face_to_json(image_path, json_path):
+    try:
+        embedding = DeepFace.represent(img_path=image_path, model_name="VGG-Face")
+
+        with open(json_path, "w") as f:
+            json.dump(embedding, f)
+    
+    except Exception as e:
+        raise RuntimeError("No face detected") from e
 
 def save_to_csv(json_path, csv_path):
     if os.path.isfile(json_path):
@@ -103,11 +192,12 @@ def ThemSV():
 #save and fragment image
     os.makedirs('photos', exist_ok=True)
     temp_photo_path = f'photos/{id}.png'
-    os.makedirs('photos', exist_ok=True)
     Photo.save(temp_photo_path)
     fragment_dir = f'photos/{id}'
     fragment_image(temp_photo_path, fragment_dir)
 
+    save_face_to_json(temp_photo_path, f'photos/{id}/{id}face.json')
+    
     metadata= extract_image_data(temp_photo_path)
     os.remove(temp_photo_path)
     img_info_path = f'photos/{id}/{id}info.json'
@@ -122,7 +212,8 @@ def ThemSV():
     students.append({
         "ID" : id,
         "Name" : name,
-        "DateOfBirth" : birth
+        "DateOfBirth" : birth,
+        "CheckedIn" : False
     })
     with open(img_info_path, 'w', encoding='utf-8') as info:
         json.dump(metadata, info , ensure_ascii=False, indent=4)
@@ -131,25 +222,6 @@ def ThemSV():
         json.dump(students, json_file, ensure_ascii=False, indent=4)
     save_to_csv(json_path, csv_path)
     return jsonify({"success": True, "message":f"them sinh vien {name} ma so {id} thanh cong"}),200
-
-#    ids_exsited = set()
-#    with open(csv_path, 'a', newline='', encoding='utf-8') as f:
-#        if os.path.isfile(csv_path):
-#           with open(csv_path, 'r', newline='', encoding='utf-8') as fr:
-#            read =  csv.reader(fr)
-#            next(read)
-#            for row in read:
-#                ids_exsited.add(row[0])
-#            if id in ids_exsited:
-#                return jsonify({"success": False, "message":" ma so {id} da ton tai"}),409
-#                #return redirect('/Themsv')      
-#            csv.writer(f).writerow([id, name, birth])
-#        else:
-#            csv.writer(f).writerow(['Mã Sinh Viên','Tên Sinh Viên', 'Ngày sinh'])
-#           csv.writer(f).writerow([id, name, birth])
-#    return jsonify({"success": True, "message":f"them sinh vien {name} ma so {id} thanh cong"}),200
-#    #return redirect('/Themsv')
-
 
 #add student by uploading csv file
 @app.route('/ThemsvList', methods=['GET'])
@@ -176,33 +248,15 @@ def ThemSVList():
                     students.append({
                         "ID": row['Mã số sinh viên'],
                         "Name": row['Tên Sinh Viên'],
-                        "DateOfBirth": row['Ngày sinh']
+                        "DateOfBirth": row['Ngày sinh'],
+                        "CheckedIn": False
                     })
     with open(json_path, 'w', encoding='utf-8') as json_file:
         json.dump(students, json_file, ensure_ascii=False, indent=4)
     save_to_csv(json_path, csv_path)
     os.remove('students/temp.csv')
     return jsonify({"success": True, "message":f"them sinh vien thanh cong"}),200
-#    ids_existed = set()
-#    with open(csv_path, 'r', newline='', encoding='utf-8') as f:
-#        read =  csv.reader(f)
-#        next(read)
-#        for row in read:
-#            ids_existed.add(row[0])
-#    with open('students/temp.csv', 'r', newline='', encoding='utf-8') as uploaded_f:
-#         read = csv.reader(uploaded_f)
-#         if not os.path.isfile(csv_path):
-#           csv.writer(f).writerow(['Mã Sinh Viên','Tên Sinh Viên', 'Ngày sinh'])
-#
-#         with open(csv_path, 'a', newline='', encoding='utf-8') as f:
-#             write =csv.writer(f)
-#             for row in read:
-#                if row[0] not in ids_existed:
-#                    write.writerow(row)
-    #flash(f"added info to the list", "success")
-#    os.remove('students/temp.csv')
-#    return jsonify({"success": True, "message":f"them sinh vien thanh cong"}),200
-    #return redirect('/ThemsvList')
+
 
 
 
@@ -247,5 +301,158 @@ def get_students():
         students = json.load(json_file)
     return jsonify({"success":True, "students": students}), 200
 
+
+
+@app.route('/AddPhoto', methods=['GET'])
+def showphotoform():
+     return render_template('bosunganh.html')
+@app.route('/AddPhoto', methods=['Post'])
+def add_photo():
+    json_path = f'students/students.json'
+    id_to_add_photo = request.form['ID']
+    photo_path = f'photos/{id_to_add_photo}.png'
+    photo_to_add = request.files['photo']
+
+    allowed_extensions = {'png', 'jpg', 'jpeg'}
+    if '.' not in photo_to_add.filename or photo_to_add.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
+       return jsonify({"success": False, "message" : "Invalid file format, only png, jpg, jpeg allowed"}), 400
+    frag_dir_to_add = f'photos/{id_to_add_photo}'
+
+    if not os.path.isfile(json_path):
+        return jsonify({"success": False, "message": "Không tìm thấy file sinh viên"}), 404
+    
+    with open(json_path, 'r', encoding='utf-8') as json_file:
+        students = json.load(json_file)
+    id_existed = {student['ID'] for student in students}
+    if id_to_add_photo not in id_existed:
+        return jsonify({"success": False, "message": f"sinh viên mã số {id_to_add_photo} không tồn tại trong danh sách"}), 404
+    
+    os.makedirs('photos', exist_ok=True)
+    temp_photo_path_to_add = f'photos/{id_to_add_photo}.png'
+    os.makedirs('photos', exist_ok=True)
+    photo_to_add.save(temp_photo_path_to_add)
+
+    fragment_image(temp_photo_path_to_add, frag_dir_to_add)
+
+    save_face_to_json(temp_photo_path_to_add, f'photos/{id_to_add_photo}/{id_to_add_photo}face.json')
+
+    metadata= extract_image_data(temp_photo_path_to_add)
+    os.remove(temp_photo_path_to_add)
+    img_info_path = f'photos/{id_to_add_photo}/{id_to_add_photo}info.json'
+
+    with open(img_info_path, 'w', encoding='utf-8') as info:
+        json.dump(metadata, info , ensure_ascii=False, indent=4)
+    return jsonify({"success": True, "message": "Đã thêm ảnh thành công"}), 404
+
+@app.route('/ThemsvID', methods=['GET'])
+def showIDform():
+    return render_template('ThemsvID.html')
+@app.route('/ThemsvID', methods=['Post'])
+def themsvID():
+    Photo = request.files['photo']
+    allowed_extensions = {'png', 'jpg', 'jpeg'}
+    if '.' not in Photo.filename or Photo.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
+       return jsonify({"success": False, "message" : "Invalid file format, only png, jpg, jpeg allowed"}), 400
+    os.makedirs('photos', exist_ok=True)
+    temp_photo_path = f'photos/temp.png'
+    Photo.save(temp_photo_path)
+    url = get_url(temp_photo_path)
+    if not url:
+        return jsonify({"success": False, "message" : "no qr code detected"}), 400
+    if not url.text.startswith("https://ctsv.hust"):
+        return jsonify({"success": False, "message" : "Not school link"}), 400
+    link = url.text
+    student_info = get_student_info_from_web(link)
+    id = student_info[1]
+    name = student_info[0]
+    dob = get_dob_from_ID(temp_photo_path)
+    photo_path= f"photos/{id}.jpg"
+    os.remove(temp_photo_path)
+    
+
+    fragment_dir = f'photos/{id}'
+    fragment_image(photo_path, fragment_dir)
+
+    save_face_to_json(photo_path, f'photos/{id}/{id}face.json')
+    
+    metadata= extract_image_data(photo_path)
+    os.remove(photo_path)
+    img_info_path = f'photos/{id}/{id}info.json'
+
+    json_path = 'students/students.json'
+    students = []
+    if os.path.isfile(json_path):
+        with open(json_path, 'r', encoding='utf-8') as json_file:
+            students = json.load(json_file)
+    if any(student['ID'] == id for student in students):
+        return jsonify({"success": False, "message":f"ma so {id} da ton tai"}),409
+    students.append({
+        "ID" : id,
+        "Name" : name,
+        "DateOfBirth" : dob,
+        "CheckedIn" : False
+    })
+    with open(img_info_path, 'w', encoding='utf-8') as info:
+        json.dump(metadata, info , ensure_ascii=False, indent=4)
+
+    with open(json_path, 'w', encoding='utf-8') as json_file:
+        json.dump(students, json_file, ensure_ascii=False, indent=4)
+    save_to_csv(json_path, csv_path)
+    return jsonify({"success": True, "message":f"them sinh vien {name} ma so {id} thanh cong"}),200
+
+
+@app.route('/checkin', methods=['GET'])
+def showCheckInPage():
+    return render_template('Diemdanh.html')
+
+
+@app.route('/CheckInWithNameFace', methods=['GET'])
+def showCheckInWithNamePage():
+    return render_template('Diemdanhbangten.html')
+@app.route('/CheckInWithNameFace', methods=['Post'])
+def CheckInWithFaceAndName():
+    name= request.form['Name']
+    id = request.form['ID']
+    Photo = request.files['photo']
+    allowed_extensions = {'png', 'jpg', 'jpeg'}
+    if '.' not in Photo.filename or Photo.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
+       return jsonify({"success": False, "message" : "Invalid file format, only png, jpg, jpeg allowed"}), 400
+        #return redirect('/Themsv')
+#save and fragment image
+    json_path = 'students/students.json'
+    with open(json_path, 'r', encoding='utf-8') as json_file:
+        students = json.load(json_file)
+    id_existed = {student['ID'] for student in students}
+    if id not in id_existed:
+        return jsonify({"success": False, "message": f"sinh viên mã số {id} không tồn tại trong danh sách"}), 404
+    for student in students:
+        if student['ID'] == id and student['Name'] != name:
+            return jsonify({"success": False, "message": f"Thông tin sinh viên mã số {id} không đúng"}), 404
+        if student['ID'] == id and student['CheckedIn'] == True:
+            return jsonify({"success": True, "message": f"Thông tin sinh viên mã số {id} đã được check in từ trước"}), 200
+
+    os.makedirs('photos', exist_ok=True)
+    temp_photo_path = f'photos/temp{id}.png'
+    Photo.save(temp_photo_path)
+
+    save_face_to_json(temp_photo_path, f'photos/{id}/temp{id}face.json')
+    os.remove(temp_photo_path)
+    face_json_temp = f'photos/{id}/temp{id}face.json'
+    face_json = f'photos/{id}/{id}face.json'
+    if not os.path.isfile(face_json):
+        os.remove(face_json_temp)
+        return jsonify({"success": False, "message": f"Sinh viên mã số {id} chưa có ảnh trong hệ thống"}), 404
+    if not compare_face(face_json, face_json_temp):
+        os.remove(face_json_temp)
+        return jsonify({"success": False, "message": f"Không trùng khuôn mặt"}), 404
+    os.remove(face_json_temp)
+    for student in students:
+        if student['ID'] == id:
+            student['CheckedIn'] = True
+    with open(json_path, 'w', encoding='utf-8') as json_file:
+        json.dump(students, json_file, ensure_ascii=False, indent=4)
+    return jsonify({"success": True, "message": f"Điểm danh thành công"}), 200
+
 if __name__ == '__main__':
     app.run(debug=True)
+    

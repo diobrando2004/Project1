@@ -1,11 +1,11 @@
-    document.getElementById("themSV").addEventListener("submit", async function(event) {
-    event.preventDefault(); // Prevent the default form submission
+document.getElementById("Addphoto").addEventListener("submit", async function(event) {
+    event.preventDefault();
     
-    const form = document.getElementById("themSV");
-    const formData = new FormData(form); // Get form data including the file
+    const form = document.getElementById("Addphoto");
+    const formData = new FormData(form); 
     
     try {
-        const response = await fetch("/Themsv", {
+        const response = await fetch("/AddPhoto", {
             method: "POST",
             body: formData
         });

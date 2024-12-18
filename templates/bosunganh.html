@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ThêmSVList</title>
+    <title>addPhoto</title>
     <style>
         html, body {
         margin: 0; 
@@ -62,16 +62,12 @@
             color: white;
             border: 1px;
         }
-        a:hover{
-            cursor: pointer;
-            background-color: rgb(246, 87, 87);
+        img{
+            position: fixed;
         }
         div.response {
         position: relative;
         display: inline;
-        }
-        img{
-            position: fixed;
         }
         h2{
             text-align: center;
@@ -80,6 +76,7 @@
             background-color: red;
         }
         body{
+            position: relative;
             font-family: Arial, Helvetica, sans-serif;
             margin: 20px;
         }
@@ -94,7 +91,13 @@
         label{
             display: block;
         }
-
+        input[type="text"],input[type="file"],input[type="submit"]{
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid;
+            border-radius: 5px;
+        }
         input[type="submit"] {
         background-color: rgb(255, 55, 55);
         color: white;
@@ -113,17 +116,18 @@
 <body>
 
     <img src="{{ url_for('static', filename='logo.png') }}" height="200px" alt="logo">
-    <h2>Thêm sinh viên bằng danh sách</h2>
-    <form id="themsvList" action="/ThemsvList" method="post" enctype="multipart/form-data">
-        <label for = "List" >File CSV</label>
-        <input type="file" id="List" name="List" required accept=".csv"required><br><br>
-        <input type="submit" value="Thêm Danh sách">
-        <br>
-        <br>
+    <h2>Thêm ảnh cho sinh viên</h2>
+    <form id = "Addphoto" action="/AddPhoto" method="post" enctype="multipart/form-data">
+        <label for = "ID" >Mã sinh viên</label>
+        <input type="text" id="ID" name="ID" required>
+        <label for = "photo" >Ảnh sinh viên</label>
+        <input type="file" id="photo" name="photo" accept="image/*" required>
+
+        <input type="submit" value="Bổ sung ảnh">
         <a href="/">return</a>
     </form>
     <div class="response" id="responseMessage" style="text-align: center; margin-top: 20px;"></div>
-    <script src="{{ url_for('static', filename='js/themsvlist.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/addphoto.js') }}"></script>
 
     <h1>Danh sách sinh viên</h1>
     <div id ="student-list"></div>
@@ -133,5 +137,6 @@
         <button onclick="fetchStudents()">Refresh List</button>
     </div>  
     <script src ="{{ url_for('static', filename='js/showlist.js') }}"> </script>
+
 </body>
 </html>

@@ -5,19 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <style>
-        .navigate-checkin {
-            text-align: center;
-            margin: 20px;
-        }
-        .navigate-checkin button {
-            background-color: lightblue;
-            border: 2px solid black;
-            padding: 10px 20px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.2s, background-color 0.2s;
-        }
         html, body {
         margin: 0; 
         padding: 0; 
@@ -49,7 +36,6 @@
         }
         .student-list td, .student-list tr{
             text-align: center;
-
         }
         h1{
             font-family: Arial, Helvetica, sans-serif;
@@ -76,24 +62,13 @@
     
     <h1>Web điểm danh cho sinh viên</h1>
     <ul>
-        <a href="/Themsv">Thêm sinh viên bằng tay</a>
+        <a href="/CheckInWithNameFace">Điểm danh bằng tên và mssv</a>
         <br>
         <br>
-        <a href="/ThemsvList">Thêm sinh viên bằng danh sách</a>
-        <br>
-        <br>
-        <a href="/XoaSV">Xóa Sinh viên khỏi danh sách</a>
-        <br>
-        <br>
-        <a href="/AddPhoto">Thêm ảnh cho sinh viên</a>
-        <br>
-        <br>
-        <a href="/ThemsvID">Thêm sinh viên bằng thẻ</a>
+        <a href="/CheckInwithID">Thêm sinh viên thẻ</a>
+        
     </ul>
-    <div class="navigate-checkin">
-        <button onclick="window.location.href='/checkin'">Go to Check-In</button>
-    </div>
-    <h1>Danh sách sinh viên</h1>    
+    <h1>Danh sách sinh viên</h1>
     <div id ="student-list"></div>
     <br>
     <br>

@@ -16,6 +16,7 @@ document.getElementById("xoaSV").addEventListener("submit", async function(event
         if (result.success) {
             responseMessage.textContent = result.message;
             responseMessage.style.color = "green";
+            fetchStudents()
         } else {
             responseMessage.textContent = result.message;
             responseMessage.style.color = "red";

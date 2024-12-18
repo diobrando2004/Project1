@@ -16,6 +16,7 @@ document.getElementById("themsvList").addEventListener("submit", async function(
         if (result.success) {
             responseMessage.textContent = result.message;
             responseMessage.style.color = "green";
+            fetchStudents()
         } else {
             responseMessage.textContent = result.message;
             responseMessage.style.color = "red";
