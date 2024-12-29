@@ -1,11 +1,11 @@
-document.getElementById("checkInWithNameFace").addEventListener("submit", async function(event) {
+document.getElementById("checkInwithID").addEventListener("submit", async function(event) {
     event.preventDefault(); 
     
-    const form = document.getElementById("checkInWithNameFace");
-    const formData = new FormData(form); 
+    const form = document.getElementById("checkInwithID");
+    const formData = new FormData(form);
     
     try {
-        const response = await fetch("/CheckInWithNameFace", {
+        const response = await fetch("/CheckInwithID", {
             method: "POST",
             body: formData
         });

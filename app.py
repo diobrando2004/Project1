@@ -1,7 +1,8 @@
 import re
-from flask import Flask, render_template, request, flash, redirect, jsonify
+from flask import Flask, render_template, request, flash, redirect, jsonify, make_response, send_file
 import csv
 import os
+import tempfile
 import json
 import pytesseract
 from werkzeug.exceptions import RequestEntityTooLarge
@@ -13,6 +14,7 @@ import zxingcpp
 from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
 import base64
+import io
 from scipy.spatial.distance import cosine
 
 
@@ -163,7 +165,10 @@ def fragment_image(image_path, output_path, frag_numv = 4):
                 left = j*frag_width
                 box= (left, upper, min(left+frag_width, width), min(upper+frag_height, height))
                 fragment = img.crop(box)
-                fragment.save(os.path.join(output_path, f'fragment_{count}.png'))
+                fragment.save(
+                    os.path.join(output_path, f'fragment_{count}.bin'),
+                    format='PNG'
+                    )
                 count+=1
 
 @app.route('/')
@@ -452,6 +457,94 @@ def CheckInWithFaceAndName():
     with open(json_path, 'w', encoding='utf-8') as json_file:
         json.dump(students, json_file, ensure_ascii=False, indent=4)
     return jsonify({"success": True, "message": f"Điểm danh thành công"}), 200
+
+@app.route('/CheckInwithID', methods=['GET'])
+def showCheckInWithIDPage():
+    return render_template('Diemdanhbangthe.html')
+@app.route('/CheckInwithID', methods=['Post'])
+def checkInWithID():
+    Photo = request.files['photo']
+    allowed_extensions = {'png', 'jpg', 'jpeg'}
+    if '.' not in Photo.filename or Photo.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
+       return jsonify({"success": False, "message" : "Invalid file format, only png, jpg, jpeg allowed"}), 400
+    json_path = 'students/students.json'
+    with open(json_path, 'r', encoding='utf-8') as json_file:
+        students = json.load(json_file)
+    id_existed = {student['ID'] for student in students}
+    temp_photo_path = f'photos/tempID.png'
+    Photo.save(temp_photo_path)
+    url = get_url(temp_photo_path)
+    if not url:
+        return jsonify({"success": False, "message" : "no qr code detected"}), 400
+    if not url.text.startswith("https://ctsv.hust"):
+        return jsonify({"success": False, "message" : "Not school link"}), 400
+    link = url.text
+    student_info = get_student_info_from_web(link)
+    id = student_info[1]
+    name = student_info[0]
+    if id not in id_existed:
+        return jsonify({"success": False, "message": f"sinh viên mã số {id} không tồn tại trong danh sách"}), 404
+    for student in students:
+        if student['ID'] == id and student['Name'] != name:
+            return jsonify({"success": False, "message": f"Thông tin sinh viên mã số {id} không đúng"}), 404
+        if student['ID'] == id and student['CheckedIn'] == True:
+            return jsonify({"success": True, "message": f"Thông tin sinh viên mã số {id} đã được check in từ trước"}), 200
+    os.remove(temp_photo_path)
+    for student in students:
+        if student['ID'] == id:
+            student['CheckedIn'] = True
+    with open(json_path, 'w', encoding='utf-8') as json_file:
+        json.dump(students, json_file, ensure_ascii=False, indent=4)
+    os.remove(f"photos/{id}.jpg")
+    return jsonify({"success": True, "message": f"Điểm danh thành công"}), 200
+
+
+@app.route('/reset_checkin', methods=['POST'])
+def reset_checkin():
+    json_path = 'students/students.json'
+    if not os.path.isfile(json_path):
+        return jsonify({"success": False, "message": "Không tìm thấy file sinh viên"}), 404
+
+    with open(json_path, 'r', encoding='utf-8') as json_file:
+        students = json.load(json_file)
+
+    for student in students:
+        student["CheckedIn"] = False
+
+    with open(json_path, 'w', encoding='utf-8') as json_file:
+        json.dump(students, json_file, ensure_ascii=False, indent=4)
+
+    save_to_csv(json_path, csv_path)
+
+    return jsonify({"success": True, "message": "Đã reset trạng thái Điểm danh cho tất cả sinh viên"}), 200
+
+
+@app.route('/download_failed_checkins', methods=['GET'])
+def download_failed_checkins():
+    json_path = 'students/students.json'
+    with open(json_path, 'r', encoding='utf-8') as json_file:
+        students = json.load(json_file)
+
+    failed_students = [s for s in students if not s["CheckedIn"]]
+
+    if not failed_students:
+        return jsonify({"success": False, "message": "No students failed to check in."}), 400
+
+    with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8-sig', delete=False, newline='') as temp_file:
+        writer = csv.writer(temp_file)
+        writer.writerow(["MSSV", "Tên Sinh Viên", "Ngày sinh"])
+        for student in failed_students:
+            writer.writerow([student["ID"], student["Name"], student["DateOfBirth"]])
+
+        temp_file_path = temp_file.name 
+
+    response = send_file(temp_file_path, 
+                         as_attachment=True, 
+                         download_name='failed_checkins.csv', 
+                         mimetype='text/csv')
+
+    return response
+
 
 if __name__ == '__main__':
     app.run(debug=True)

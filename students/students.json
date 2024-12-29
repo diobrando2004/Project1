@@ -10,11 +10,5 @@
         "Name": "Phạm Hải Đăng",
         "DateOfBirth": "2004-04-13",
         "CheckedIn": false
-    },
-    {
-        "ID": "123",
-        "Name": "dio",
-        "DateOfBirth": "2024-12-04",
-        "CheckedIn": true
     }
 ]

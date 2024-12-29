@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>addPhoto</title>
+    <title>ThêmSV</title>
     <style>
         html, body {
         margin: 0; 
@@ -11,8 +11,8 @@
         width: 100%;
         height: 100%;
         overflow: hidden;
-        position: relative; 
-        overflow-y: auto;
+        position: relative;
+        overflow-y: auto; 
         }
         body::before {
         content: "";
@@ -29,7 +29,7 @@
             background-color: antiquewhite;
             margin: auto;
         }
-        .fetcher {
+        body div.fetcher {
             text-align: center;
         }
         .student-list th{
@@ -63,6 +63,10 @@
             color: white;
             border: 1px;
         }
+        a:hover{
+            cursor: pointer;
+            background-color: rgb(246, 87, 87);
+        }
         img{
             position: fixed;
         }
@@ -77,7 +81,6 @@
             background-color: red;
         }
         body{
-            position: relative;
             font-family: Arial, Helvetica, sans-serif;
             margin: 20px;
         }
@@ -117,18 +120,15 @@
 <body>
 
     <img src="{{ url_for('static', filename='logo.png') }}" height="200px" alt="logo">
-    <h2>Thêm ảnh cho sinh viên</h2>
-    <form id = "Addphoto" action="/AddPhoto" method="post" enctype="multipart/form-data">
-        <label for = "ID" >Mã sinh viên</label>
-        <input type="text" id="ID" name="ID" required>
-        <label for = "photo" >Ảnh sinh viên</label>
+    <h2>Điểm danh bằng thẻ sinh viên</h2>
+    <form id = "checkInwithID" action="/CheckInwithID" method="post" enctype="multipart/form-data">
+        <label for = "photo" >Ảnh thẻ sinh viên</label>
         <input type="file" id="photo" name="photo" accept="image/*" required>
-
-        <input type="submit" value="Bổ sung ảnh">
-        <a href="/">return</a>
+        <input type="submit" value="Điểm danh">
+        <a href="/checkin">return</a>
     </form>
-    <div class="response" id="responseMessage" style="text-align: center; margin-top: 20px;"></div>
-    <script src="{{ url_for('static', filename='js/addphoto.js') }}"></script>
+    <div class = "response" id="responseMessage" style="text-align: center; margin-top: 20px;"></div>
+    <script src="{{ url_for('static', filename='js/CheckInWithID.js') }}"></script>
 
     <h1>Danh sách sinh viên</h1>
     <div id ="student-list"></div>
@@ -136,13 +136,11 @@
     <br>
     <div class="fetcher">   
         <button onclick="fetchStudents()">Refresh List</button>
-        <button id="resetCheckinButton" onclick="fetchStudents()" >Reset Check-In</button>
+        <button id="resetCheckinButton">Reset Check-In</button>
         <br>
         <button id="downloadFailedCheckinsButton">Tải danh sách sinh viên vắng mặt</button>
         <br>
         <div id="resetCheckinMessage" style="margin-top: 10px; color: green;"></div>
-        
-        
     </div>  
     <script src ="{{ url_for('static', filename='js/showlist.js') }}"> </script>
     <script src ="{{ url_for('static', filename='js/resetCheckIn.js') }}"> </script>

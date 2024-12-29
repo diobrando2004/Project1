@@ -12,6 +12,27 @@
         height: 100%;
         overflow: hidden;
         position: relative; 
+        overflow-y: auto;
+        }
+        .link-box {
+            width: 300px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        .link-box a {
+            display: block;
+            margin: 10px 0;
+            padding: 10px;
+            text-decoration: none;
+            background-color: red;
+            color: #fff;
+            font-weight: bold;
+            border-radius: 5px;
+            transition: all 0.3s ease;
         }
         body::before {
         content: "";
@@ -61,20 +82,28 @@
 <body>
     
     <h1>Web điểm danh cho sinh viên</h1>
-    <ul>
-        <a href="/CheckInWithNameFace">Điểm danh bằng tên và mssv</a>
+    <div class="link-box">
+        <a href="/CheckInWithNameFace">Điểm danh bằng tên và MSSV</a>
         <br>
+        <a href="/CheckInwithID">Điểm danh bằng thẻ</a>
         <br>
-        <a href="/CheckInwithID">Thêm sinh viên thẻ</a>
-        
-    </ul>
+        <a href="/">Return</a>
+    </div>
     <h1>Danh sách sinh viên</h1>
     <div id ="student-list"></div>
     <br>
     <br>
     <div class="fetcher">   
         <button onclick="fetchStudents()">Refresh List</button>
+        <button id="resetCheckinButton" onclick="fetchStudents()">Reset Check-In</button> <br> <br>
+        <button id="downloadFailedCheckinsButton">Tải danh sách sinh viên vắng mặt</button>
+        <br>
+        <div id="resetCheckinMessage" style="margin-top: 10px; color: green;"></div>
+
     </div>  
+    
     <script src ="{{ url_for('static', filename='js/showlist.js') }}"> </script>
+    <script src ="{{ url_for('static', filename='js/resetCheckIn.js') }}"> </script>
+    <script src ="{{ url_for('static', filename='js/downloadFailedCheckIn.js') }}"> </script>
 </body>
 </html>

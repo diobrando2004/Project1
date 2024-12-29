@@ -12,6 +12,7 @@
         height: 100%;
         overflow: hidden;
         position: relative; 
+        overflow-y: auto;
         }
         body::before {
         content: "";
@@ -132,8 +133,14 @@
     <br>
     <div class="fetcher">   
         <button onclick="fetchStudents()">Refresh List</button>
+        <button id="resetCheckinButton">Reset Check-In</button>
+        <br>
+        <button id="downloadFailedCheckinsButton">Tải danh sách sinh viên vắng mặt</button>
+        <div id="resetCheckinMessage" style="margin-top: 10px; color: green;"></div>
     </div>  
     <script src ="{{ url_for('static', filename='js/showlist.js') }}"> </script>
+    <script src ="{{ url_for('static', filename='js/resetCheckIn.js') }}"> </script>
+    <script src ="{{ url_for('static', filename='js/downloadFailedCheckIn.js') }}"> </script>
 
 </body>
 </html>

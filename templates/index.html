@@ -9,6 +9,27 @@
             text-align: center;
             margin: 20px;
         }
+        .link-box {
+            width: 300px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        .link-box a {
+            display: block;
+            margin: 10px 0;
+            padding: 10px;
+            text-decoration: none;
+            background-color: red;
+            color: #fff;
+            font-weight: bold;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
         .navigate-checkin button {
             background-color: lightblue;
             border: 2px solid black;
@@ -25,6 +46,7 @@
         height: 100%;
         overflow: hidden;
         position: relative; 
+        overflow-y: auto;
         }
         body::before {
         content: "";
@@ -75,21 +97,17 @@
 <body>
     
     <h1>Web điểm danh cho sinh viên</h1>
-    <ul>
+    <div class="link-box">
         <a href="/Themsv">Thêm sinh viên bằng tay</a>
-        <br>
         <br>
         <a href="/ThemsvList">Thêm sinh viên bằng danh sách</a>
         <br>
-        <br>
         <a href="/XoaSV">Xóa Sinh viên khỏi danh sách</a>
-        <br>
         <br>
         <a href="/AddPhoto">Thêm ảnh cho sinh viên</a>
         <br>
-        <br>
         <a href="/ThemsvID">Thêm sinh viên bằng thẻ</a>
-    </ul>
+    </div>
     <div class="navigate-checkin">
         <button onclick="window.location.href='/checkin'">Go to Check-In</button>
     </div>
@@ -99,7 +117,14 @@
     <br>
     <div class="fetcher">   
         <button onclick="fetchStudents()">Refresh List</button>
+        <button id="resetCheckinButton">Reset Check-In</button>
+        <br>
+        <button id="downloadFailedCheckinsButton">Tải danh sách sinh viên vắng mặt</button>
+        <br>
+        <div id="resetCheckinMessage" style="margin-top: 10px; color: green;"></div>
     </div>  
     <script src ="{{ url_for('static', filename='js/showlist.js') }}"> </script>
+    <script src ="{{ url_for('static', filename='js/resetCheckIn.js') }}"> </script>
+    <script src ="{{ url_for('static', filename='js/downloadFailedCheckIn.js') }}"> </script>
 </body>
 </html>
