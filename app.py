@@ -200,9 +200,16 @@ def ThemSV():
     Photo.save(temp_photo_path)
     fragment_dir = f'photos/{id}'
     fragment_image(temp_photo_path, fragment_dir)
-
-    save_face_to_json(temp_photo_path, f'photos/{id}/{id}face.json')
-    
+    try:
+        
+        save_face_to_json(temp_photo_path, f'photos/{id}/{id}face.json')
+    except Exception as e:
+        os.remove(temp_photo_path)
+        if os.path.isdir(f'photos/{id}'):
+            for file in os.listdir(f'photos/{id}'):
+                os.remove(os.path.join(f'photos/{id}', file))
+            os.rmdir(f'photos/{id}')
+        return jsonify({"success": False, "message":f"Khong tim thay khuon mat"}),409
     metadata= extract_image_data(temp_photo_path)
     os.remove(temp_photo_path)
     img_info_path = f'photos/{id}/{id}info.json'
@@ -246,14 +253,19 @@ def ThemSVList():
         reader = csv.DictReader(uploaded_f)
         for row in reader:
             if row['Mã số sinh viên'] not in id_existed:
-                dobTemp = datetime.strptime(row['Ngày sinh'], "%m/%d/%Y").date()
+                formats = ["%m-%d-%Y", "%m/%d/%Y"]
+                for fmt in formats:
+                    try:
+                        dobTemp = datetime.strptime(row['Ngày sinh'], fmt).date()
+                    except ValueError:
+                        continue
                 if dobTemp > datetime.now().date():
                     return jsonify({"success": False, "message":f"Ngay sinh cua sinh vien ma so {row['Mã số sinh viên']} khong hop le"}),400
                 else:
                     students.append({
                         "ID": row['Mã số sinh viên'],
                         "Name": row['Tên Sinh Viên'],
-                        "DateOfBirth": row['Ngày sinh'],
+                        "DateOfBirth": dobTemp.strftime("%Y-%m-%d"),
                         "CheckedIn": False
                     })
     with open(json_path, 'w', encoding='utf-8') as json_file:
@@ -339,7 +351,16 @@ def add_photo():
 
     fragment_image(temp_photo_path_to_add, frag_dir_to_add)
 
-    save_face_to_json(temp_photo_path_to_add, f'photos/{id_to_add_photo}/{id_to_add_photo}face.json')
+    try:
+        
+        save_face_to_json(temp_photo_path_to_add, f'photos/{id_to_add_photo}/{id_to_add_photo}face.json')
+    except Exception as e:
+        os.remove(temp_photo_path_to_add)
+        if os.path.isdir(f'photos/{id}'):
+            for file in os.listdir(f'photos/{id}'):
+                os.remove(os.path.join(f'photos/{id}', file))
+            os.rmdir(f'photos/{id}')
+        return jsonify({"success": False, "message":f"Khong tim thay khuon mat"}),409
 
     metadata= extract_image_data(temp_photo_path_to_add)
     os.remove(temp_photo_path_to_add)
