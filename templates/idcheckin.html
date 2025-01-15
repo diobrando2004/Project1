@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student ID and Face Scanner</title>
+    <style>
+        html, body {
+        margin: 0; 
+        padding: 0; 
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        position: relative; 
+        overflow-y: auto;
+        }
+        body::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 200vh;
+        background-color: rgba(255, 255, 255, 0.8); 
+        z-index: -1;
+        }
+        .student-list{
+            width: 80%;
+            background-color: antiquewhite;
+            margin: auto;
+        }
+        .fetcher {
+            text-align: center;
+        }
+        .student-list th{
+            text-align: center;
+        }
+        .student-list td, .student-list tr{
+            text-align: center;
+        }
+        h1{
+            font-family: Arial, Helvetica, sans-serif;
+            text-align: center;
+        }
+        body {
+            position: relative;
+            background-image: url("{{ url_for('static', filename='background.jpg') }}");
+            background-size: cover;
+        }
+        a {
+            background-color: white;
+            color: black;
+            border-style: double;
+        }
+
+        ul{
+            font-size: 20px;
+            text-align: center;
+        }
+
+        .success-message {
+            color: green;
+            font-weight: bold;
+        }
+
+        .fail-message {
+            color: red;
+            font-weight: bold;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        video, canvas {
+            margin: 20px auto;
+            display: block;
+        }
+        #response {
+            margin-top: 20px;
+            font-size: 18px;
+            color: red;
+        }
+        #start-button {
+            background-color:  red;
+            color: white;
+            border: 0cap;
+        }
+        #start-button:hover {
+            background-color:  rgb(255, 91, 91);
+        }
+        .start {
+            width: 300px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        .start a {
+            display: block;
+            margin: 10px 0;
+            padding: 10px;
+            text-decoration: none;
+            background-color: red;
+            color: #fff;
+            font-weight: bold;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        .start button {
+            text-decoration: none;
+            background-color: red;
+            color: #fff;
+            font-weight: bold;
+            width: 300px;
+        }   
+    </style>
+</head>
+<body>
+    <h1>Quét thẻ sinh viên và kiểm tra khuôn mặt</h1>
+
+    <div class = "start" id="start-section"  style="text-align: center;">
+        <button id="start-button" style="padding: 10px 20px; font-size: 16px;">Bắt đầu</button>
+        <br>
+        <a href="/">Return</a>
+    </div>
+
+    <div id="step1" style="display: none;">
+        <h2>Step 1: Scan ID Card</h2>
+        <video id="video-id" width="640" height="480" autoplay></video>
+        <canvas id="canvas-id" width="640" height="480" style="display:none;"></canvas>
+        <div id="response-id">Đợi thẻ sinh viên...</div>
+    </div>
+
+    <div id="step2" style="display: none;">
+        <h2>Step 2: Scan Face</h2>
+        <video id="video-face" width="640" height="480" autoplay></video>
+        <canvas id="canvas-face" width="640" height="480" style="display:none;"></canvas>
+        <div id="response-face">Đợi khuôn mặt...</div>
+    </div>
+
+    <h1>Danh sách sinh viên</h1>
+    <div id ="student-list"></div>
+    <br>
+    <br>
+    <div class="fetcher">   
+        <button onclick="fetchStudents()">Refresh List</button>
+        <button id="resetCheckinButton" onclick="fetchStudents()" >Reset Check-In</button>
+        <br>
+        <button id="downloadFailedCheckinsButton">Tải danh sách sinh viên vắng mặt</button>
+        <br>
+        <div id="resetCheckinMessage" style="margin-top: 10px; color: green;"></div>
+        <br>
+        <div id="deleteMessage" style="margin-top: 10px; color: green;"></div>
+        
+    </div> 
+    <script src ="{{ url_for('static', filename='js/scanID.js') }}"> </script>
+    <script src ="{{ url_for('static', filename='js/showlist.js') }}"> </script>
+    <script src ="{{ url_for('static', filename='js/resetCheckIn.js') }}"> </script>
+    <script src ="{{ url_for('static', filename='js/downloadFailedCheckIn.js') }}"> </script>
+</body>
+</html>

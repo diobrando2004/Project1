@@ -1,1 +1,26 @@
-[]
+[
+    {
+        "ID": "20225175",
+        "Name": "Phạm Hải Đăng",
+        "DateOfBirth": "2004-04-13",
+        "CheckedIn": true
+    },
+    {
+        "ID": "20227634",
+        "Name": "Phạm Văn B",
+        "DateOfBirth": "2004-12-01",
+        "CheckedIn": false
+    },
+    {
+        "ID": "20227667",
+        "Name": "Nguyễn Văn C",
+        "DateOfBirth": "2023-12-04",
+        "CheckedIn": false
+    },
+    {
+        "ID": "20222396",
+        "Name": "Nguyễn Hoàng Thái",
+        "DateOfBirth": "2004-10-12",
+        "CheckedIn": false
+    }
+]

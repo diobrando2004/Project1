@@ -16,8 +16,11 @@ from bs4 import BeautifulSoup
 import base64
 import io
 from scipy.spatial.distance import cosine
-
-
+from pytesseract import image_to_string
+from io import BytesIO
+import cv2
+import numpy as np
+pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 app = Flask(__name__)
 csv_path='students/students.csv'
 app.secret_key = "watever"
@@ -182,7 +185,7 @@ def show_form():
 @app.route('/Themsv', methods=['POST'])
 def ThemSV():
     name= request.form['Name']
-    id = request.form['ID']
+    id = request.form['ID'].strip()
     birth = request.form['dob']
     Photo = request.files['photo']
     allowed_extensions = {'png', 'jpg', 'jpeg'}
@@ -235,7 +238,6 @@ def ThemSV():
     save_to_csv(json_path, csv_path)
     return jsonify({"success": True, "message":f"them sinh vien {name} ma so {id} thanh cong"}),200
 
-#add student by uploading csv file
 @app.route('/ThemsvList', methods=['GET'])
 def show_formList():
     return render_template('ThemsvList.html')
@@ -283,7 +285,7 @@ def show_deleteform():
 @app.route('/XoaSV', methods=['Post'])
 def XoaSV():
     json_path = f'students/students.json'
-    id_to_delete = request.form['ID']
+    id_to_delete = request.form['ID'].strip()
 
     if not os.path.isfile(json_path):
         return jsonify({"success": False, "message": "Không tìm thấy file sinh viên"}), 404
@@ -411,7 +413,7 @@ def themsvID():
         with open(json_path, 'r', encoding='utf-8') as json_file:
             students = json.load(json_file)
     if any(student['ID'] == id for student in students):
-        return jsonify({"success": False, "message":f"ma so {id} da ton tai"}),409
+        return jsonify({"success": False, "message":f"mã số {id} đã tồn tại"}),409
     students.append({
         "ID" : id,
         "Name" : name,
@@ -424,7 +426,7 @@ def themsvID():
     with open(json_path, 'w', encoding='utf-8') as json_file:
         json.dump(students, json_file, ensure_ascii=False, indent=4)
     save_to_csv(json_path, csv_path)
-    return jsonify({"success": True, "message":f"them sinh vien {name} ma so {id} thanh cong"}),200
+    return jsonify({"success": True, "message":f"Thêm sinh viên {name} mã số {id} thành công"}),200
 
 
 @app.route('/checkin', methods=['GET'])
@@ -438,7 +440,7 @@ def showCheckInWithNamePage():
 @app.route('/CheckInWithNameFace', methods=['Post'])
 def CheckInWithFaceAndName():
     name= request.form['Name']
-    id = request.form['ID']
+    id = request.form['ID'].strip()
     Photo = request.files['photo']
     allowed_extensions = {'png', 'jpg', 'jpeg'}
     if '.' not in Photo.filename or Photo.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
@@ -520,6 +522,80 @@ def checkInWithID():
     return jsonify({"success": True, "message": f"Điểm danh thành công"}), 200
 
 
+@app.route('/scan-id', methods=['GET'])
+def showscanID():
+    return render_template('idcheckin.html')
+@app.route('/scan-id', methods=['POST'])
+def scan_id():
+    try:
+        data = request.json
+        image_data = data['image']
+        json_path = 'students/students.json'
+        with open(json_path, 'r', encoding='utf-8') as json_file:
+            students = json.load(json_file)
+        id_existed = {student['ID'] for student in students}
+        image_data = base64.b64decode(image_data.split(',')[1])
+        image = Image.open(io.BytesIO(image_data))
+        image_np = np.array(image)
+
+        ocr_result = pytesseract.image_to_string(image_np, config='--psm 6')
+
+        import re
+        match = re.search(r'\b\d{8}\b', ocr_result)
+        if match:
+            id_number = match.group()
+            if id_number not in id_existed:
+                return jsonify({"success": False, "message": f"Sinh viên mã số {id_number} chưa trong hệ thống"}), 404
+            for student in students:
+                if student['ID'] == id_number:
+                    if student['CheckedIn'] == True: 
+                        return jsonify({"success": True,'message': f"Sinh viên mã số {id_number} đã được điểm danh"})
+            else:
+                return jsonify({"success": True,'message': f"Mã sinh viên: {id_number}"})
+        else:
+            return jsonify({"success": False, "message": f"Thử lại"}), 404
+
+    except Exception as e:
+        return jsonify({'message': f"Error: {str(e)}"}), 500
+@app.route('/scan-face', methods=['POST'])
+def scan_face():
+    try:
+        data = request.json
+        face_data = data['face']
+        id = data['id'] 
+        temp_photo_path = f'photos/temp.png'
+        json_path = 'students/students.json'
+        face_data = base64.b64decode(face_data.split(',')[1])
+        face_image = Image.open(io.BytesIO(face_data))
+
+        with open(json_path, 'r', encoding='utf-8') as json_file:
+            students = json.load(json_file)
+
+        face_np = np.array(face_image)
+        Photo = Image.fromarray(face_np) 
+        Photo.save(temp_photo_path)
+
+        save_face_to_json(temp_photo_path, f'photos/{id}/temp{id}face.json')
+        os.remove(temp_photo_path)
+        face_json_temp = f'photos/{id}/temp{id}face.json'
+        face_json = f'photos/{id}/{id}face.json'
+        if not os.path.isfile(face_json):
+            os.remove(face_json_temp)
+            return jsonify({"success": False, "message": f"Sinh viên mã số {id} chưa có ảnh trong hệ thống"}), 404
+        if not compare_face(face_json, face_json_temp):
+            os.remove(face_json_temp)
+            return jsonify({"success": False, "message": f"Không trùng khuôn mặt"}), 404
+        os.remove(face_json_temp)
+        for student in students:
+            if student['ID'] == id:
+                student['CheckedIn'] = True
+        with open(json_path, 'w', encoding='utf-8') as json_file:
+            json.dump(students, json_file, ensure_ascii=False, indent=4)
+        return jsonify({"success": True, "message": f"Điểm danh thành công"}), 200
+
+    except Exception as e:
+        return jsonify({'message': f"Error: {str(e)}"}), 500
+
 @app.route('/reset_checkin', methods=['POST'])
 def reset_checkin():
     json_path = 'students/students.json'
@@ -538,6 +614,42 @@ def reset_checkin():
     save_to_csv(json_path, csv_path)
 
     return jsonify({"success": True, "message": "Đã reset trạng thái Điểm danh cho tất cả sinh viên"}), 200
+
+@app.route('/api/students', methods=['GET'])
+def get_student_to_delete():
+    try:
+        with open('students/students.json', 'r') as file:
+            students = json.load(file)
+        return jsonify({'success': True, 'students': students})
+    except Exception as e:
+        return jsonify({'success': False, 'message': 'Có lỗi xảy ra'})
+@app.route('/api/delete-student', methods=['POST'])
+def delete_student():
+    try:
+        json_path = f'students/students.json'
+        data = request.json
+        id_to_delete = data.get('studentId')
+
+        with open(json_path, 'r', encoding='utf-8') as json_file:
+            students = json.load(json_file)
+
+        updated_students = [student for student in students if student['ID'] != id_to_delete]
+
+        with open(json_path, 'w', encoding='utf-8') as json_file:
+            json.dump(updated_students, json_file, ensure_ascii=False, indent = 4)
+        with open(csv_path, 'w', encoding='utf-8-sig', newline='') as csv_file:
+            writer=csv.writer(csv_file)
+            writer.writerow(['Mã Sinh Viên', 'Tên Sinh Viên', 'Ngày sinh'])
+            for student in updated_students:
+                writer.writerow([student['ID'], student['Name'], student['DateOfBirth']])
+        img_to_delete = f'photos/{id_to_delete}'
+        if os.path.isdir(img_to_delete):
+            for file in os.listdir(img_to_delete):
+                os.remove(os.path.join(img_to_delete, file))
+            os.rmdir(img_to_delete)
+        return jsonify({"success": True, "message": f"sinh viên mã số {id_to_delete} đã xóa thành công"}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': 'Thất bại'})    
 
 
 @app.route('/download_failed_checkins', methods=['GET'])
